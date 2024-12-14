@@ -1,4 +1,39 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+
+const ScoreDial = ({ score, label }) => {
+  const [animatedScore, setAnimatedScore] = useState(0);
+
+  useEffect(() => {
+    setAnimatedScore(0);
+    const timer = setTimeout(() => {
+      setAnimatedScore(score);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [score]);
+
+  const rotation = (animatedScore / 100) * 360;
+  const isOver50 = rotation > 180;
+  const fillStyle = {
+    transform: `rotate(${Math.min(rotation, 180)}deg)`,
+  };
+  const fill2Style = {
+    transform: `rotate(${Math.max(rotation - 180, 0)}deg)`,
+    opacity: isOver50 ? 1 : 0,
+  };
+
+  return (
+    <div className="score-dial">
+      <div className="score-dial-circle">
+        <div className="score-dial-fill" style={fillStyle}></div>
+        <div className="score-dial-fill" style={fill2Style}></div>
+        <div className="score-dial-center">
+          <span className="score-value">{Math.round(animatedScore)}%</span>
+          <span className="score-label">{label}</span>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // Helper function to parse resume into sections
 const parseResumeIntoSections = (markdown) => {
@@ -72,6 +107,8 @@ function App() {
   const [originalResume, setOriginalResume] = useState('')
   const [optimizedResume, setOptimizedResume] = useState('')
   const [isOptimizing, setIsOptimizing] = useState(false)
+  const [originalScore, setOriginalScore] = useState(0)
+  const [optimizedScore, setOptimizedScore] = useState(0)
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -114,6 +151,15 @@ function App() {
         const data = await response.json()
         setOriginalResume(data.original)
         setOptimizedResume(data.optimized)
+        
+        // Set scores from the API response
+        if (data.originalScores?.original?.total) {
+          setOriginalScore(data.originalScores.original.total)
+        }
+        if (data.optimizedScores?.optimized?.total) {
+          setOptimizedScore(data.optimizedScores.optimized.total)
+        }
+        
         setStatus('Resume optimized successfully!')
       } else {
         const error = await response.json()
@@ -182,28 +228,41 @@ function App() {
       </div>
 
       {(originalResume || optimizedResume) && (
-        <div className="resume-comparison">
-          <div className="resume-headers">
-            <h2>Original Resume</h2>
-            <h2>Optimized Resume</h2>
+        <>
+          <div className="resume-scores">
+            <div className="score-section">
+              <h3 className="score-title">Original Resume Match</h3>
+              <ScoreDial score={originalScore} label="Match Score" />
+            </div>
+            <div className="score-section">
+              <h3 className="score-title">Optimized Resume Match</h3>
+              <ScoreDial score={optimizedScore} label="Match Score" />
+            </div>
           </div>
-          {allSections.map((sectionTitle, index) => (
-            <div key={index} className="section-comparison">
-              <div className="section-title">{sectionTitle}</div>
-              <div className="section-content">
-                <div className="original-section">
-                  <pre className="resume-content">{originalSections[sectionTitle]}</pre>
-                </div>
-                <div className="optimized-section">
-                  <pre 
-                    className="resume-content"
-                    dangerouslySetInnerHTML={renderContent(optimizedSections[sectionTitle])}
-                  />
+
+          <div className="resume-comparison">
+            <div className="resume-headers">
+              <h2>Original Resume</h2>
+              <h2>Optimized Resume</h2>
+            </div>
+            {allSections.map((sectionTitle, index) => (
+              <div key={index} className="section-comparison">
+                <div className="section-title">{sectionTitle}</div>
+                <div className="section-content">
+                  <div className="original-section">
+                    <pre className="resume-content">{originalSections[sectionTitle]}</pre>
+                  </div>
+                  <div className="optimized-section">
+                    <pre 
+                      className="resume-content"
+                      dangerouslySetInnerHTML={renderContent(optimizedSections[sectionTitle])}
+                    />
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </>
       )}
     </div>
   )
