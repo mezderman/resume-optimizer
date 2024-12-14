@@ -145,7 +145,7 @@ app.post('/api/optimize', upload.single('resume'), async (req, res) => {
 
     Remember: 
     1. Your response MUST start with "---SCORES---"
-    2. EVERY significant change must have an explanation in curly brackets
+    2. EVERY change must have an explanation in curly brackets
     3. Explanations should be specific and detailed
     4. Focus on changes that improve ATS matching and alignment with the job requirements`;
 

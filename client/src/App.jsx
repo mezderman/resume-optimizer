@@ -109,6 +109,7 @@ function App() {
   const [isOptimizing, setIsOptimizing] = useState(false)
   const [originalScore, setOriginalScore] = useState(0)
   const [optimizedScore, setOptimizedScore] = useState(0)
+  const [hasResults, setHasResults] = useState(false)
 
   const handleFileChange = (event) => {
     const file = event.target.files[0]
@@ -136,6 +137,7 @@ function App() {
 
     setIsOptimizing(true)
     setStatus('Optimizing your resume...')
+    setHasResults(false)
 
     const formData = new FormData()
     formData.append('resume', selectedFile)
@@ -161,6 +163,7 @@ function App() {
         }
         
         setStatus('Resume optimized successfully!')
+        setHasResults(true)
       } else {
         const error = await response.json()
         setStatus(error.message || 'Optimization failed. Please try again.')
@@ -227,7 +230,7 @@ function App() {
         )}
       </div>
 
-      {(originalResume || optimizedResume) && (
+      {hasResults && (
         <>
           <div className="resume-scores">
             <div className="score-section">
