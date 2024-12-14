@@ -153,7 +153,7 @@ app.post('/api/optimize', upload.single('resume'), async (req, res) => {
 
     // Call OpenAI API
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         { 
           "role": "system", 
