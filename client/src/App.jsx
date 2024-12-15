@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react'
+import { jsPDF } from 'jspdf'
+import { marked } from 'marked'
 
 const ScoreDial = ({ score, label }) => {
   const [animatedScore, setAnimatedScore] = useState(0);
@@ -176,6 +178,70 @@ function App() {
     }
   }
 
+  const handleDownloadMD = () => {
+    const blob = new Blob([optimizedResume], { type: 'text/markdown' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'optimized-resume.md';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadPDF = () => {
+    const doc = new jsPDF();
+    
+    // Convert markdown to HTML
+    const html = marked(optimizedResume);
+    
+    // Remove HTML tags and curly bracket explanations for clean PDF
+    const cleanText = html
+      .replace(/<[^>]*>/g, '')
+      .replace(/\{[^}]+\}/g, '')
+      .split('\n')
+      .filter(line => line.trim());
+
+    // PDF Configuration
+    const margin = 20;
+    const lineHeight = 7;
+    let y = margin;
+
+    // Add content to PDF
+    cleanText.forEach(line => {
+      // Check if it's a header (starts with #)
+      if (line.startsWith('#')) {
+        doc.setFontSize(16);
+        doc.setFont(undefined, 'bold');
+      } else {
+        doc.setFontSize(12);
+        doc.setFont(undefined, 'normal');
+      }
+
+      // Handle text wrapping
+      const textLines = doc.splitTextToSize(line, doc.internal.pageSize.width - 2 * margin);
+      
+      // Check if we need a new page
+      if (y + textLines.length * lineHeight > doc.internal.pageSize.height - margin) {
+        doc.addPage();
+        y = margin;
+      }
+
+      // Add text to PDF
+      textLines.forEach(textLine => {
+        doc.text(textLine, margin, y);
+        y += lineHeight;
+      });
+
+      // Add some spacing after each line
+      y += 3;
+    });
+
+    // Save the PDF
+    doc.save('optimized-resume.pdf');
+  };
+
   // Parse resumes into sections
   const originalSections = parseResumeIntoSections(originalResume);
   const optimizedSections = parseResumeIntoSections(optimizedResume);
@@ -232,6 +298,21 @@ function App() {
 
       {hasResults && (
         <>
+          <div className="download-section">
+            <button 
+              onClick={handleDownloadMD}
+              className="download-button"
+            >
+              Download Markdown
+            </button>
+            <button 
+              onClick={handleDownloadPDF}
+              className="download-button"
+            >
+              Download PDF
+            </button>
+          </div>
+
           <div className="resume-scores">
             <div className="score-section">
               <h3 className="score-title">Original Resume Match</h3>
